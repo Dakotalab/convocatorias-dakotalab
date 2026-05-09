@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+
+  <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>DakotaLab - Radar de Convocatorias</title>
+    <meta name="description"
+          content="Herramienta de busqueda de convocatorias, becas y fondos para DakotaLab - organizacion STEAM en Villavicencio, Meta, Colombia." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+          href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap"
+          rel="stylesheet" />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+
+<body>
+
+    <header>
+          <div class="logo">
+                  <div class="logo-icon">L</div>div>
+                  <div>
+                            <div class="logo-text">DakotaLab</div>
+                            <div class="logo-sub">Radar de Convocatorias</div>
+                  </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:16px;">
+                  <button id="theme-toggle" class="theme-toggle-btn" aria-label="Cambiar tema">S</button>button>
+                  <div class="status-pill">
+                            <div class="status-dot idle" id="status-dot"></div>
+                            <span id="status-text">Listo</span>span>
+                  </div>
+          </div>
+    </header>
+
+    <main>
+
+          <!-- API KEYS SECTION -->
+          <div class="section" id="keys-section">
+                  <div class="section-header" onclick="toggleSection('keys')">
+                            <div class="section-title">
+                                        <span class="icon">K</span>span> Claves de API
+                                        <span class="section-badge" id="keys-badge" style="display:none">V Configuradas</span>span>
+                            </div>
+                            <button class="toggle-btn" id="keys-toggle-btn">Ocultar</button>button>
+                  </div>
+                  <div class="collapsible" id="keys-body" style="max-height:400px">
+                            <div class="keys-grid" style="margin-top:18px">
+                                        <div class="key-field">
+                                                      <label for="gemini-key">Gemini API Key</label>label>
+                                                      <div class="input-wrap">
+                                                                      <input type="password" id="gemini-key" placeholder="AIza..." autocomplete="off" />
+                                                                      <button class="eye-btn" onclick="toggleEye('gemini-key',this)" title="Mostrar/ocultar">E</button>button>
+                                                      </div>
+                                                      <div class="key-hint">Gratis en <a href="https://aistudio.google.com"
+                                                                                                        target="_blank">aistudio.google.com</a>a> - Get API key (sin tarjeta)</div>
+                                        </div>
+                                        <div class="key-field">
+                                                      <label for="serper-key">Serper API Key</label>label>
+                                                      <div class="input-wrap">
+                                                                      <input type="password" id="serper-key" placeholder="abc123..." autocomplete="off" />
+                                                                      <button class="eye-btn" onclick="toggleEye('serper-key',this)" title="Mostrar/ocultar">E</button>button>
+                                                      </div>
+                                                      <div class="key-hint">2,500 busquedas gratis en <a href="https://serper.dev" target="_blank">serper.dev</a>a>
+                                                                      - Dashboard - API Key</div>
+                                        </div>
+                            </div>
+                            <button class="save-btn" onclick="saveKeys()">S Guardar claves</button>button>
+                  </div>
+          </div>
+
+          <!-- CATEGORIES SECTION -->
+          <div class="section" id="cat-section">
+                  <div class="section-header" onclick="toggleSection('cat')">
+                            <div class="section-title"><span class="icon">F</span>span> Categorias de busqueda</div>
+                            <button class="toggle-btn" id="cat-toggle-btn">Ocultar</button>button>
+                  </div>
+                  <div class="collapsible" id="cat-body" style="max-height:500px">
+                            <div class="cat-controls">
+                                        <button class="cat-ctrl-btn" onclick="selectAllCats()">Seleccionar todas</button>button>
+                                        <button class="cat-ctrl-btn" onclick="deselectAllCats()">Deseleccionar todas</button>button>
+                            </div>
+                            <div class="chips-grid" id="chips-grid"></div>
+                  </div>
+          </div>
+
+          <!-- SEARCH BUTTON -->
+          <div class="search-wrap">
+                  <button id="search-btn" disabled onclick="startSearch()">B Buscar convocatorias</button>button>
+          </div>
+
+          <!-- PROGRESS PANEL -->
+          <div id="progress-panel">
+                  <div class="progress-panel-inner">
+                            <div id="ai-batch-indicator" style="display:none">
+                                        L Uso eficiente: 1 consulta IA = todas las categorias seleccionadas
+                            </div>
+                            <div class="progress-header">
+                                        <span id="p-icon" class="spinning" style="margin-right:8px">G</span>span>
+                                        <span id="p-text">Procesando busqueda...</span>span>
+                            </div>
+                            <div class="progress-bar-wrap">
+                                        <div class="progress-bar" id="progress-bar"></div>
+                            </div>
+                            <div class="progress-steps" id="progress-steps"></div>
+                            <div id="rate-limit-msg">
+                                        Limite de velocidad (429) alcanzado.<br>
+                                        Espera <span id="countdown-timer">60</span>span> segundos e intenta de nuevo.
+                            </div>
+                  </div>
+          </div>
+
+          <!-- FILTERS BAR -->
+          <div id="filters-bar">
+                  <div class="filters-inner">
+                            <div class="results-count" id="results-count">0 convocatorias</div>
+                            <div class="filter-group">
+                                        <span class="filter-label">Tipo:</span>span>
+                                        <span class="filter-chip active" data-filter-type="all" onclick="setTypeFilter('all',this)">Todas</span>span>
+                                        <span class="filter-chip" data-filter-type="financiamiento" onclick="setTypeFilter('financiamiento',this)">F
+                                                      Financiamiento</span>span>
+                                        <span class="filter-chip" data-filter-type="contrato" onclick="setTypeFilter('contrato',this)">C
+                                                      Contrato</span>span>
+                                        <span class="filter-chip" data-filter-type="premio" onclick="setTypeFilter('premio',this)">P Premio</span>span>
+                                        <span class="filter-chip" data-filter-type="rse" onclick="setTypeFilter('rse',this)">R RSE</span>span>
+                                        <span class="filter-chip" data-filter-type="fondo_publico" onclick="setTypeFilter('fondo_publico',this)">G
+                                                      Fondo publico</span>span>
+                                        <span class="filter-chip" data-filter-type="dotacion_equipos"
+                                                      onclick="setTypeFilter('dotacion_equipos',this)">E Equipos</span>span>
+                            </div>
+                            <div class="filter-group">
+                                        <span class="filter-label">Urgencia:</span>span>
+                                        <span class="filter-chip active" data-filter-urg="all" onclick="setUrgFilter('all',this)">Todas</span>span>
+                                        <span class="filter-chip" data-filter-urg="alta" onclick="setUrgFilter('alta',this)">A Alta</span>span>
+                                        <span class="filter-chip" data-filter-urg="media" onclick="setUrgFilter('media',this)">M Media</span>span>
+                                        <span class="filter-chip" data-filter-urg="baja" onclick="setUrgFilter('baja',this)">B Baja</span>span>
+                            </div>
+                            <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;">
+                                        <button class="copy-btn" onclick="copyResults()">C Copiar</button>button>
+                                        <button class="copy-btn export-pdf-btn" onclick="exportPDF()"
+                                                      style="border-color:var(--accent);color:var(--accent)">P Exportar PDF</button>button>
+                            </div>
+                  </div>
+          </div>
+
+          <!-- RESULTS GRID -->
+          <div id="results-grid"></div>
+
+    </main>
+
+    <footer>DakotaLab (c) 2026 - Villavicencio, Meta, Colombia - Ciudadania digital STEAM para comunidades</footer>
+  <div class="toast" id="toast"></div>
+
+  <!-- MODULOS JS (orden de dependencias) -->
+  <script src="js/config.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/keys.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/search.js"></script>
+  <script src="js/pdf.js"></script>
+
+  <!-- INICIALIZACION -->
+  <script>
+        document.addEventListener('DOMContentLoaded', () => {
+                initTheme();
+                buildChips();
+                loadKeys();
+                checkSearchBtn();
+        });
+  </script>
+
+</body>
+
+</html>html>
+
+  </script></footer>
+    </main>
+                  </div>
+    </header>
+</body></title>
+  </head>
